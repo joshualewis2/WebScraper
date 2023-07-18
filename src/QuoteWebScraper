@@ -1,0 +1,46 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"strings"
+
+	"github.com/gocolly/colly/v2"
+)
+
+func main() {
+	// Create a new Collector
+	c := colly.NewCollector()
+
+	// Array to store quotes
+	var quotes []string
+
+	// On every <div> element which has a class attribute called "quote"
+	c.OnHTML("div.quote", func(e *colly.HTMLElement) {
+		// Extract the quote text and author
+		text := e.ChildText("span.text")
+		author := e.ChildText("span small.author")
+
+		// Remove newline characters from the text and append the quote to the quotes array
+		text = strings.ReplaceAll(text, "\n", "")
+		quote := fmt.Sprintf("%s - %s", text, author)
+		quotes = append(quotes, quote)
+	})
+
+	// Before making a request, print "Visiting <url>"
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL)
+	})
+
+	// Start scraping
+	err := c.Visit("http://quotes.toscrape.com")
+	if err != nil {
+		log.Fatal("Error while scraping:", err)
+	}
+
+	// Print the scraped quotes
+	fmt.Println("Scraped Quotes:")
+	for _, q := range quotes {
+		fmt.Println(q)
+	}
+}
